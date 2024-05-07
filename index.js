@@ -1,27 +1,23 @@
-require('dotenv').config();
 
 require("./utils.js");
-const saltRounds = 12;
-const bcrypt = require('bcrypt');
-const session = require('express-session');
+
+require('dotenv').config();
 const express = require('express');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+const bcrypt = require('bcrypt');
+const saltRounds = 12;
+
 const port = process.env.PORT || 3000;
-const Joi = require("joi");
-const path = require('path');
-const mongoose = require('mongoose');
-
-
-
-var { database } = require('./databaseConnection.js');
 
 const app = express();
-app.use(express.urlencoded({ extended: false }));
-const MongoStore = require('connect-mongo');
+
+const Joi = require("joi");
+
 
 const expireTime = 24 * 60 * 60 * 1000; //expires after 1 day  (hours * minutes * seconds * millis)
 
-
-//secret info section
+/* secret information section */
 const mongodb_host = process.env.MONGODB_HOST;
 const mongodb_user = process.env.MONGODB_USER;
 const mongodb_password = process.env.MONGODB_PASSWORD;
@@ -29,27 +25,28 @@ const mongodb_database = process.env.MONGODB_DATABASE;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 
 const node_session_secret = process.env.NODE_SESSION_SECRET;
+/* END secret section */
+
+var {database} = include('databaseConnection');
 
 const userCollection = database.db(mongodb_database).collection('users');
 
-const mongoStore = MongoStore.create({
-    mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}?retryWrites=true`,
-    crypto: {
-        secret: mongodb_session_secret
-    },
-    touchAfter: 24 * 3600 
-});
+app.use(express.urlencoded({extended: false}));
 
-//i be needing to create sessions n shit
-// allows us to create sessions with cookies
-app.use(session({
+var mongoStore = MongoStore.create({
+	mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/sessions`,
+	crypto: {
+		secret: mongodb_session_secret
+	}
+})
+
+app.use(session({ 
     secret: node_session_secret,
-    store: mongoStore, //default is memory store 
-    saveUninitialized: false,
-    resave: true
+	store: mongoStore, //default is memory store 
+	saveUninitialized: false, 
+	resave: true
 }
 ));
-
 //1
 //we want a homepage with a sign up and login
 //not logged in = sign up / log in option
