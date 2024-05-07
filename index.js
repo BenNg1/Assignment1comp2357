@@ -1,11 +1,15 @@
 require('dotenv').config();
 
+require("./utils.js");
 const saltRounds = 12;
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const express = require('express');
 const port = process.env.PORT || 3000;
 const Joi = require("joi");
+const path = require('path');
+const mongoose = require('mongoose');
+
 
 
 var { database } = require('./databaseConnection.js');
@@ -28,12 +32,13 @@ const node_session_secret = process.env.NODE_SESSION_SECRET;
 
 const userCollection = database.db(mongodb_database).collection('users');
 
-var mongoStore = MongoStore.create({
-    mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/sessions`,
+const mongoStore = MongoStore.create({
+    mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}?retryWrites=true`,
     crypto: {
         secret: mongodb_session_secret
-    }
-})
+    },
+    touchAfter: 24 * 3600 
+});
 
 //i be needing to create sessions n shit
 // allows us to create sessions with cookies

@@ -7,8 +7,11 @@
     "express-session": "^1.18.0",
     "joi": "^17.13.1",
     "mongodb": "^6.6.0",
+    "mongoose": "^8.3.4",
     "node.js": "^0.0.1-security",
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "path": "^0.12.7",
+    "utils": "^0.3.1"
   },
   "name": "assignment-1-benng1",
   "description": "For this assignment you will be creating a simple website using Node.js. You will also be creating and\r connecting to a MongoDB database to store the users with their names, emails and passwords. You will\r create a publicly accessible MongoDB database using Atlas (at: https://www.mongodb.com/atlas).",
