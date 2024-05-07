@@ -103,6 +103,7 @@ app.post('/loggingin', async (req, res) => {
         console.log("correct password");
         req.session.authenticated = true;
         req.session.name = name;
+        req.session.email = email;
         req.session.cookie.maxAge = expireTime;
 
         res.redirect('/loggedIn');
@@ -148,36 +149,77 @@ app.post('/', (req, res) => {
 // then create a session and send the user to /members page
 // sign up
 // pre much my create user  
-app.get('/signup', (req, res) => {
-    var missingName = req.query.missingName;
-    var missingEmail = req.query.missingEmail;
-    var missingPassword = req.query.missingPassword;
-
+app.get('/signup', (req,res) => {
     var html = `
-        create user <br>
-        
+        Signup 
         <form action='/submitUser' method='post'>
-        name:
             <input name='name' type='text' placeholder='Name'>
-         <br> email address: 
-            <input name='email' type='email' placeholder='Email'>
-            <br> password:
-            <input name='password' type='password' placeholder='Password'>
-            <br>
-            <button>Submit</button>
+            <br><input name='email' type='text' placeholder='Email'>
+            <br><input name='password' type='password' placeholder='Password'>
+            <br><button type='submit'>Sign up</button>
         </form>
     `;
-    if (missingName) {
-        html += "<br> name is required";
+    res.send(html);
+});
+
+
+
+//step 2 to validate the fields
+app.post('/submitUser', async (req, res) => {
+    var name = req.body.name;
+    var email = req.body.email;
+    var password = req.body.password;
+
+    // Check if name, email, or password fields are empty
+    if (!name) {
+        var errorMessage = "Name is required.<br>";
+        errorMessage += '<a href="/signup">Try again</a>'; 
+        return res.send(errorMessage);
     }
-    if (missingEmail) {
-        html += "<br> email is required";
-    }
-    if (missingPassword) {
-        html += "<br> password is required";
+    
+    if (!email) {
+        var errorMessage = "Email is required. <br>";
+        errorMessage += '<a href="/signup">Try again</a>';
+        return res.send(errorMessage);
     }
 
-    res.send(html);
+    if (!password) {
+        var errorMessage = "Password is required. <br>";
+        errorMessage += '<a href="/signup">Try again</a>'; 
+        return res.send(errorMessage);
+    }
+    
+    // Define validation schema with relaxed rules
+    const schema = Joi.object({
+        name: Joi.string().max(30).required(), 
+        email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(), 
+        password: Joi.string().min(3).max(50).required() 
+    });
+
+    const validationResult = schema.validate({ name: name, email: email, password: password });
+
+// Handle validation errors
+if (validationResult.error) {
+    console.log(validationResult.error);
+    var errorMessage = "Invalid input. Try again.";
+    errorMessage += '<a href="/signup">Try again</a>';
+    return res.send(errorMessage);
+} else {
+    // Encrpyt the mf
+    var hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Insert the user into the database
+    await userCollection.insertOne({ name: name, email: email, password: hashedPassword });
+    console.log("Inserted user");
+    
+    // Redirect to the "/members" page after successful signup
+    req.session.authenticated = true;
+    req.session.email = email;
+    req.session.name = name;
+    req.session.cookie.maxAge = expireTime;
+
+    return res.redirect('/members');
+}
 });
 
 //the submit one
